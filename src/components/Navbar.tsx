@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Home, FileText, Settings, Menu, X, ChevronDown } from "lucide-react";
+import { Home, FileText, Settings, Menu, X } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const Navbar: React.FC = () => {
@@ -25,7 +25,7 @@ export const Navbar: React.FC = () => {
 
   const navigationItems = [
     { name: "Dashboard", path: "/", icon: Home },
-    { name: "Reports", path: "/departments", icon: FileText },
+    { name: "Reports", path: "/reports", icon: FileText },
     { name: "Settings", path: "/settings", icon: Settings },
   ];
 
