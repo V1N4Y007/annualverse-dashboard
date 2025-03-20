@@ -32,8 +32,8 @@ export const Navbar: React.FC = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out backdrop-blur-md",
-        isScrolled ? "bg-white/80 shadow-soft" : "bg-transparent"
+        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out",
+        isScrolled || location.pathname !== "/" ? "bg-white shadow-soft" : "bg-transparent"
       )}
     >
       <div className="page-container">
@@ -89,7 +89,7 @@ export const Navbar: React.FC = () => {
           animate={{ opacity: 1, height: "auto" }}
           exit={{ opacity: 0, height: 0 }}
           transition={{ duration: 0.3 }}
-          className="md:hidden bg-white/90 backdrop-blur-md border-t border-border"
+          className="md:hidden bg-white border-t border-border"
         >
           <div className="page-container py-3 space-y-1">
             {navigationItems.map((item) => (
