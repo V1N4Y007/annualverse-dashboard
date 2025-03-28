@@ -25,10 +25,14 @@ import {
 } from "firebase/firestore";
 import { toast } from "@/hooks/use-toast";
 
-const FirebaseContext = createContext();
+const FirebaseContext = createContext(null);
 
 export function useFirebase() {
-  return useContext(FirebaseContext);
+  const context = useContext(FirebaseContext);
+  if (!context) {
+    throw new Error("useFirebase must be used within a FirebaseProvider");
+  }
+  return context;
 }
 
 export function FirebaseProvider({ children }) {
@@ -245,7 +249,9 @@ export function FirebaseProvider({ children }) {
   };
   
   useEffect(() => {
+    console.log("Setting up auth state change listener");
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Auth state changed:", user ? "User logged in" : "No user");
       setCurrentUser(user);
       setLoading(false);
     });
@@ -265,6 +271,8 @@ export function FirebaseProvider({ children }) {
     updateReport,
     deleteReport
   };
+  
+  console.log("FirebaseProvider rendering, loading:", loading);
   
   return (
     <FirebaseContext.Provider value={value}>

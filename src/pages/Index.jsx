@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "@/components/Layout";
@@ -89,9 +90,23 @@ const departmentDistribution = [
 ];
 
 const Index = () => {
+  console.log("Index component rendering");
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { currentUser, getDepartments, getReports } = useFirebase();
+  
+  // Safely access Firebase context - add error handling
+  let firebaseContext;
+  try {
+    firebaseContext = useFirebase();
+    console.log("Firebase context loaded:", firebaseContext ? "yes" : "no");
+  } catch (error) {
+    console.error("Failed to load Firebase context:", error);
+    firebaseContext = { currentUser: null };
+  }
+  
+  const { currentUser, getDepartments, getReports } = firebaseContext || {};
+  console.log("Current user:", currentUser);
+  
   const [searchQuery, setSearchQuery] = useState("");
   const [departments, setDepartments] = useState([]);
   const [reports, setReports] = useState([]);
@@ -103,9 +118,11 @@ const Index = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        console.log("Fetching data, currentUser:", currentUser);
         
         // If not logged in and trying to access dashboard, redirect to login
         if (!currentUser) {
+          console.log("No user, using sample data");
           // Use sample data for initial view before redirecting
           setDepartments(sampleDepartments);
           setFilteredDepartments(sampleDepartments);
@@ -114,29 +131,38 @@ const Index = () => {
         }
         
         // Fetch real data from Firebase
-        const departmentsData = await getDepartments();
-        const reportsData = await getReports();
-        
-        // Process reports to add count to departments
-        const departmentsWithCounts = departmentsData.map(dept => {
-          const deptReports = reportsData.filter(report => report.departmentId === dept.id);
-          return {
-            ...dept,
-            reportCount: deptReports.length,
-            lastUpdated: deptReports.length > 0 
-              ? formatLastUpdated(deptReports.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0].updatedAt)
-              : "No reports"
-          };
-        });
-        
-        setDepartments(departmentsWithCounts.length > 0 ? departmentsWithCounts : sampleDepartments);
-        setFilteredDepartments(departmentsWithCounts.length > 0 ? departmentsWithCounts : sampleDepartments);
-        setReports(reportsData);
-        
-        toast({
-          title: "Dashboard Loaded",
-          description: "All data is loaded and ready for your review",
-        });
+        if (getDepartments && getReports) {
+          console.log("Fetching departments and reports");
+          const departmentsData = await getDepartments();
+          const reportsData = await getReports();
+          
+          console.log("Fetched data:", { departments: departmentsData.length, reports: reportsData.length });
+          
+          // Process reports to add count to departments
+          const departmentsWithCounts = departmentsData.map(dept => {
+            const deptReports = reportsData.filter(report => report.departmentId === dept.id);
+            return {
+              ...dept,
+              reportCount: deptReports.length,
+              lastUpdated: deptReports.length > 0 
+                ? formatLastUpdated(deptReports.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0].updatedAt)
+                : "No reports"
+            };
+          });
+          
+          setDepartments(departmentsWithCounts.length > 0 ? departmentsWithCounts : sampleDepartments);
+          setFilteredDepartments(departmentsWithCounts.length > 0 ? departmentsWithCounts : sampleDepartments);
+          setReports(reportsData);
+          
+          toast({
+            title: "Dashboard Loaded",
+            description: "All data is loaded and ready for your review",
+          });
+        } else {
+          console.log("Firebase methods not available, using sample data");
+          setDepartments(sampleDepartments);
+          setFilteredDepartments(sampleDepartments);
+        }
       } catch (error) {
         console.error("Error fetching data:", error);
         // Fallback to sample data
@@ -178,6 +204,17 @@ const Index = () => {
     );
     setFilteredDepartments(filtered);
   }, [searchQuery, departments]);
+  
+  // If Firebase context is not available or loading, show a loading state
+  if (!firebaseContext) {
+    return (
+      <Layout>
+        <div className="min-h-screen pt-16 flex items-center justify-center">
+          <p>Loading application...</p>
+        </div>
+      </Layout>
+    );
+  }
   
   return (
     <Layout>
