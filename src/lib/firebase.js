@@ -7,7 +7,7 @@ import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyD_fNdUKP66Z-U7IxrHXeDgCOiZ2jAFFHc",
+  apiKey: "AIzaSyDtcnu1U5Q9XPWC7gWktUB5uEprZ12SoMY", // Updated API key
   authDomain: "annualverse-11fa7.firebaseapp.com",
   databaseURL: "https://annualverse-11fa7.firebaseio.com",
   projectId: "annualverse-11fa7",
