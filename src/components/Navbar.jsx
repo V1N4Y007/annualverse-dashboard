@@ -16,9 +16,25 @@ import { Menu, X, User, LogOut, Settings, FileText, BarChart } from "lucide-reac
 
 export const Navbar = () => {
   const [isOpen, setIsOpen] = React.useState(false);
-  const { currentUser, logout } = useFirebase();
-  const isMobile = useIsMobile();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  
+  // Safely access Firebase context
+  let currentUser = null;
+  let logout = async () => {
+    console.log("Logout function not available yet");
+    navigate("/login");
+  };
+  
+  try {
+    const firebase = useFirebase();
+    currentUser = firebase?.currentUser;
+    if (firebase?.logout) {
+      logout = firebase.logout;
+    }
+  } catch (error) {
+    console.error("Firebase context not available:", error);
+  }
   
   const toggleMenu = () => setIsOpen(!isOpen);
   
