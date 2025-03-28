@@ -1,117 +1,152 @@
 
-import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { cn } from "@/lib/utils";
-import { Home, FileText, Settings, Menu, X } from "lucide-react";
-import { motion } from "framer-motion";
+import React from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useFirebase } from "@/contexts/FirebaseContext";
+import { Button } from "@/components/ui/button";
+import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Menu, X, User, LogOut, Settings, FileText, BarChart } from "lucide-react";
 
 export const Navbar = () => {
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const location = useLocation();
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  useEffect(() => {
-    setIsMobileMenuOpen(false);
-  }, [location.pathname]);
-
-  const navigationItems = [
-    { name: "Dashboard", path: "/", icon: Home },
-    { name: "Reports", path: "/reports", icon: FileText },
-    { name: "Settings", path: "/settings", icon: Settings },
-  ];
+  const [isOpen, setIsOpen] = React.useState(false);
+  const { currentUser, logout } = useFirebase();
+  const isMobile = useIsMobile();
+  const navigate = useNavigate();
+  
+  const toggleMenu = () => setIsOpen(!isOpen);
+  
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
 
   return (
-    <header
-      className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300 ease-in-out",
-        isScrolled || location.pathname !== "/" ? "bg-white shadow-soft" : "bg-transparent"
-      )}
-    >
-      <div className="page-container">
-        <div className="flex items-center justify-between h-16">
+    <nav className="fixed top-0 left-0 right-0 z-50 bg-background border-b">
+      <div className="container mx-auto px-4">
+        <div className="h-16 flex items-center justify-between">
           <div className="flex items-center">
-            <Link to="/" className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                <FileText className="w-4 h-4 text-primary" />
-              </div>
-              <span className="font-display font-medium text-lg">
-                Annual Report Portal
-              </span>
+            <Link to="/" className="text-xl font-display font-bold">
+              Annual Report Portal
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigationItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                className={cn(
-                  "px-3 py-2 text-sm rounded-md flex items-center space-x-1 transition-colors",
-                  location.pathname === item.path
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
-              >
-                <item.icon className="w-4 h-4" />
-                <span>{item.name}</span>
+          {!isMobile && (
+            <div className="flex space-x-4 items-center">
+              <Link to="/" className="hover:text-primary/80 transition-colors px-3 py-2">
+                Dashboard
               </Link>
-            ))}
-          </nav>
+              <Link to="/reports" className="hover:text-primary/80 transition-colors px-3 py-2">
+                Reports
+              </Link>
+              <Link to="/settings" className="hover:text-primary/80 transition-colors px-3 py-2">
+                Settings
+              </Link>
+              
+              {currentUser ? (
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                      <User className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuLabel>
+                      {currentUser.displayName || currentUser.email}
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => navigate("/settings")}>
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleLogout}>
+                      <LogOut className="mr-2 h-4 w-4" />
+                      <span>Logout</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              ) : (
+                <div className="flex space-x-2">
+                  <Button variant="ghost" onClick={() => navigate("/login")}>
+                    Login
+                  </Button>
+                  <Button onClick={() => navigate("/register")}>
+                    Sign Up
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Mobile Menu Button */}
-          <button
-            className="md:hidden p-2 rounded-md text-muted-foreground hover:text-foreground hover:bg-secondary"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </button>
+          {isMobile && (
+            <Button variant="ghost" size="icon" onClick={toggleMenu}>
+              {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
+          )}
         </div>
-      </div>
 
-      {/* Mobile Menu */}
-      {isMobileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          transition={{ duration: 0.3 }}
-          className="md:hidden bg-white border-t border-border"
-        >
-          <div className="page-container py-3 space-y-1">
-            {navigationItems.map((item) => (
+        {/* Mobile Navigation */}
+        {isMobile && isOpen && (
+          <div className="py-4 px-2 border-t">
+            <div className="flex flex-col space-y-3">
               <Link
-                key={item.name}
-                to={item.path}
-                className={cn(
-                  "block px-3 py-2 rounded-md text-sm font-medium transition-colors",
-                  location.pathname === item.path
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary"
-                )}
+                to="/"
+                className="px-3 py-2 rounded-md hover:bg-muted transition-colors"
+                onClick={toggleMenu}
               >
-                <div className="flex items-center">
-                  <item.icon className="w-4 h-4 mr-3" />
-                  {item.name}
-                </div>
+                Dashboard
               </Link>
-            ))}
+              <Link
+                to="/reports"
+                className="px-3 py-2 rounded-md hover:bg-muted transition-colors"
+                onClick={toggleMenu}
+              >
+                Reports
+              </Link>
+              <Link
+                to="/settings"
+                className="px-3 py-2 rounded-md hover:bg-muted transition-colors"
+                onClick={toggleMenu}
+              >
+                Settings
+              </Link>
+              
+              {currentUser ? (
+                <>
+                  <div className="px-3 py-2 text-sm font-medium text-muted-foreground">
+                    {currentUser.displayName || currentUser.email}
+                  </div>
+                  <Button variant="outline" onClick={handleLogout} className="justify-start">
+                    <LogOut className="mr-2 h-4 w-4" />
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <div className="flex flex-col space-y-2 pt-2">
+                  <Button variant="outline" onClick={() => { navigate("/login"); toggleMenu(); }}>
+                    Login
+                  </Button>
+                  <Button onClick={() => { navigate("/register"); toggleMenu(); }}>
+                    Sign Up
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
-        </motion.div>
-      )}
-    </header>
+        )}
+      </div>
+    </nav>
   );
 };
