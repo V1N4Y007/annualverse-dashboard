@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { toast } from "@/hooks/use-toast";
 
 export function RegisterForm() {
   const [displayName, setDisplayName] = useState("");
@@ -13,22 +14,22 @@ export function RegisterForm() {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [passwordError, setPasswordError] = useState("");
+  const [error, setError] = useState("");
   const { signup } = useFirebase();
   const navigate = useNavigate();
   
   const validatePassword = () => {
     if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
+      setError("Passwords do not match");
       return false;
     }
     
     if (password.length < 6) {
-      setPasswordError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters");
       return false;
     }
     
-    setPasswordError("");
+    setError("");
     return true;
   };
   
@@ -40,12 +41,35 @@ export function RegisterForm() {
     }
     
     setLoading(true);
+    setError("");
     
     try {
       await signup(email, password, displayName);
+      toast({
+        title: "Success",
+        description: "Your account has been created successfully!"
+      });
       navigate("/");
     } catch (error) {
       console.error("Registration error:", error);
+      let errorMessage = "Failed to register. Please try again.";
+      
+      if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "Email is already in use.";
+      } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "Invalid email address.";
+      } else if (error.code === 'auth/weak-password') {
+        errorMessage = "Password is too weak.";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = "Network error. Please check your connection.";
+      }
+      
+      setError(errorMessage);
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }
@@ -99,10 +123,12 @@ export function RegisterForm() {
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
             />
-            {passwordError && (
-              <p className="text-sm text-red-500">{passwordError}</p>
-            )}
           </div>
+          {error && (
+            <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
+              {error}
+            </div>
+          )}
         </CardContent>
         <CardFooter className="flex flex-col space-y-2">
           <Button type="submit" className="w-full" disabled={loading}>

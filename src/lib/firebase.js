@@ -6,9 +6,8 @@ import { getFirestore } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 // Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyD_fNdUKP66Z-U7IxrHXeDgCOiZ2jAFFHc", // Updated API key
+  apiKey: "AIzaSyD_fNdUKP66Z-U7IxrHXeDgCOiZ2jAFFHc",
   authDomain: "annualverse-11fa7.firebaseapp.com",
   databaseURL: "https://annualverse-11fa7.firebaseio.com",
   projectId: "annualverse-11fa7",
@@ -18,7 +17,6 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-console.log("Initializing Firebase with config:", firebaseConfig);
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
